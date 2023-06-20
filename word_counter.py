@@ -1,5 +1,6 @@
 import nltk
 import string
+import pandas as pd
 
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
@@ -33,7 +34,7 @@ def clean_text(text):
     return words
 
 # Read in text_file.txt
-with open('text_file.txt', 'r') as file:
+with open('text_file.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
 # Clean the text by removing numbers and symbols, and lemmatizing the words
@@ -48,7 +49,7 @@ for word in cleaned_words:
     if word not in oxford_words:
         filtered_words.append(word)
 
-# Get the frequency of occurrence of all words and sort the words according to the number of occurrences from highest to lowest
+# Get the frequency of occurrence of all words
 word_freq = {}
 for word in filtered_words:
     if word in word_freq:
@@ -56,12 +57,18 @@ for word in filtered_words:
     else:
         word_freq[word] = 1
 
-sorted_list = sorted(word_freq.items(), key=lambda item: item[1], reverse=True)
+# Convert the word frequency dictionary to a list of tuples
+word_freq_list = [(word, freq) for word, freq in word_freq.items()]
 
-# Keep only words that have occurrences between 10 and 5
-filtered_list = [item for item in sorted_list if item[1] >= 5 and item[1] <= 10]
+# Sort the words according to the number of occurrences from highest to lowest
+word_freq_list_sorted = sorted(word_freq_list, key=lambda x: x[1], reverse=True)
 
-# Export words with frequency to a new file
-with open('word_freq_filtered.txt', 'w') as outfile:
-    for item in filtered_list:
-        outfile.write("{}: {}\n".format(item[0], item[1]))
+# Convert the sorted list back to a dictionary
+word_freq_dict_sorted = {word: freq for word, freq in word_freq_list_sorted}
+
+# Create a DataFrame from the sorted word frequency data
+df_freq = pd.DataFrame({'Word': list(word_freq_dict_sorted.keys()), 'Count': list(word_freq_dict_sorted.values())})
+
+# Export words with frequency to an Excel file on Sheet1
+with pd.ExcelWriter('word_freq.xlsx') as writer:
+    df_freq.to_excel(writer, sheet_name='Sheet1', index=False)
